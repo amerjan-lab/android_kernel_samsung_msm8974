@@ -51,9 +51,13 @@ jobs:
           do.cleanup=1
           do.cleanuponabort=0
           '; }
-          block=/dev/block/platform/msm_sdcc.1/by-name/boot;
+          BLOCK=/dev/block/bootdevice/by-name/boot;
+          block=/dev/block/bootdevice/by-name/boot;
+          IS_SLOT_DEVICE=0;
           is_slot_device=0;
+          RAMDISK_COMPRESSION=auto;
           ramdisk_compression=auto;
+          PATCH_VBMETA_FLAG=auto;
           . tools/ak3-core.sh;
           dump_boot;
           write_boot;
