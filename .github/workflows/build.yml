@@ -25,15 +25,30 @@ jobs:
           REPO="/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9"
           git clone --depth=1 "${HOST}${REPO}" -b lineage-17.1 toolchain
 
-      - name: Patch DTC & Build Kernel
+      - name: Patch DTC & Configure RT3070
         run: |
           sed -i 's/^YYLTYPE yylloc;/extern YYLTYPE yylloc;/g' scripts/dtc/dtc-lexer.lex.c_shipped scripts/dtc/dtc-lexer.l
+          cat << 'EOF' >> arch/arm/configs/lineage_klte_defconfig
+          CONFIG_MAC80211=m
+          CONFIG_CFG80211=m
+          CONFIG_CFG80211_WEXT=y
+          CONFIG_RT2X00=m
+          CONFIG_RT2800USB=m
+          CONFIG_RT2800USB_RT33XX=y
+          CONFIG_RT2800USB_RT35XX=y
+          CONFIG_RT2800USB_RT53XX=y
+          CONFIG_USB_NET_DRIVERS=y
+          EOF
+
+      - name: Build Kernel
+        run: |
           export ARCH=arm
           export SUBARCH=arm
           export CROSS_COMPILE=$(pwd)/toolchain/bin/arm-linux-androideabi-
           mkdir -p out
-          make O=out HOSTCC="gcc-8" lineage_klte_bcm2079x_defconfig
+          make O=out HOSTCC="gcc-8" lineage_klte_defconfig
           make -j$(nproc) O=out PYTHON=python2 HOSTCC="gcc-8" KCFLAGS="-Wno-error"
+          make -j$(nproc) O=out PYTHON=python2 HOSTCC="gcc-8" INSTALL_MOD_PATH=modules_out modules_install
 
       - name: Package with AnyKernel3
         run: |
@@ -41,12 +56,14 @@ jobs:
           AK="/osm0sis/AnyKernel3.git"
           git clone --depth=1 "${HOST}${AK}"
           cp out/arch/arm/boot/zImage-dtb AnyKernel3/
+          mkdir -p AnyKernel3/modules/system/lib/modules
+          find out/modules_out -name "*.ko" -exec cp {} AnyKernel3/modules/system/lib/modules/ \;
           cd AnyKernel3
           cat << 'EOF' > anykernel.sh
           properties() { '
           kernel.string=NetHunter-RT3070-klte
           do.devicecheck=0
-          do.modules=0
+          do.modules=1
           do.systemless=1
           do.cleanup=1
           do.cleanuponabort=0
