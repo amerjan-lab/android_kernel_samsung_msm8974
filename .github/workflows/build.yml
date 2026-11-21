@@ -5,17 +5,19 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    container: ubuntu:20.04
     steps:
+      - name: Install Dependencies
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y bc bison build-essential ccache curl flex gcc-arm-linux-gnueabi g++-arm-linux-gnueabi git gnupg gperf imagemagick liblz4-tool libncurses5-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python2 ca-certificates
+          ln -sf /usr/bin/python2 /usr/bin/python
+
       - name: Checkout Kernel Source
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: Install Dependencies & Toolchain
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y bc bison build-essential ccache curl flex gcc-arm-linux-gnueabi g++-arm-linux-gnueabi git gnupg gperf imagemagick liblz4-tool libncurses5-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev
 
       - name: Build Kernel
         run: |
@@ -24,7 +26,7 @@ jobs:
           export CROSS_COMPILE=arm-linux-gnueabi-
           mkdir -p out
           make O=out lineage_klte_bcm2079x_defconfig
-          make -j$(nproc) O=out KCFLAGS="-Wno-error"
+          make -j$(nproc) O=out PYTHON=python2 KCFLAGS="-Wno-error"
 
       - name: Package with AnyKernel3
         run: |
