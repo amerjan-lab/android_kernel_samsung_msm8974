@@ -43,8 +43,8 @@ jobs:
           cp out/arch/arm/boot/zImage-dtb AnyKernel3/
           cd AnyKernel3
           sed -i 's/do.devicecheck=1/do.devicecheck=0/g' anykernel.sh
-          sed -i 's/block=\/dev\/block\/platform\/omap\/omap_hsmmc.0\/by-name\/boot;/block=auto;/g' anykernel.sh
-          sed -i 's/is_slot_device=0;/is_slot_device=auto;/g' anykernel.sh
+          sed -i 's|^block=.*|block=/dev/block/platform/msm_sdcc.1/by-name/boot;|g' anykernel.sh
+          sed -i 's|^is_slot_device=.*|is_slot_device=0;|g' anykernel.sh
           zip -r9 ../NetHunter-klte-RT3070.zip * -x .git README.md *placeholder
 
       - name: Upload Kernel Zip
