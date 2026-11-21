@@ -30,11 +30,11 @@ jobs:
           sed -i 's/^YYLTYPE yylloc;/extern YYLTYPE yylloc;/g' scripts/dtc/dtc-lexer.lex.c_shipped scripts/dtc/dtc-lexer.l
           sed -i '/CONFIG_MAC80211\|CONFIG_CFG80211\|CONFIG_RT2X00\|CONFIG_RT2800USB\|CONFIG_USB_NET_DRIVERS/d' arch/arm/configs/lineage_klte_bcm2079x_defconfig
           cat << 'EOF' >> arch/arm/configs/lineage_klte_bcm2079x_defconfig
-          CONFIG_MAC80211=m
-          CONFIG_CFG80211=m
+          CONFIG_MAC80211=y
+          CONFIG_CFG80211=y
           CONFIG_CFG80211_WEXT=y
-          CONFIG_RT2X00=m
-          CONFIG_RT2800USB=m
+          CONFIG_RT2X00=y
+          CONFIG_RT2800USB=y
           CONFIG_RT2800USB_RT33XX=y
           CONFIG_RT2800USB_RT35XX=y
           CONFIG_RT2800USB_RT53XX=y
@@ -49,7 +49,6 @@ jobs:
           mkdir -p out
           make O=out HOSTCC="gcc-8" lineage_klte_bcm2079x_defconfig
           make -j$(nproc) O=out PYTHON=python2 HOSTCC="gcc-8" KCFLAGS="-Wno-error"
-          make -j$(nproc) O=out PYTHON=python2 HOSTCC="gcc-8" INSTALL_MOD_PATH=modules_out modules_install
 
       - name: Package with AnyKernel3
         run: |
@@ -57,14 +56,12 @@ jobs:
           AK="/osm0sis/AnyKernel3.git"
           git clone --depth=1 "${HOST}${AK}"
           cp out/arch/arm/boot/zImage-dtb AnyKernel3/
-          mkdir -p AnyKernel3/modules/system/lib/modules
-          find out/modules_out -name "*.ko" -exec cp {} AnyKernel3/modules/system/lib/modules/ \;
           cd AnyKernel3
           cat << 'EOF' > anykernel.sh
           properties() { '
           kernel.string=NetHunter-RT3070-klte
           do.devicecheck=0
-          do.modules=1
+          do.modules=0
           do.systemless=1
           do.cleanup=1
           do.cleanuponabort=0
