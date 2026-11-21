@@ -33,7 +33,7 @@ jobs:
           export CROSS_COMPILE=$(pwd)/toolchain/bin/arm-linux-androideabi-
           mkdir -p out
           make O=out HOSTCC="gcc-8" lineage_klte_bcm2079x_defconfig
-          make -j$(nproc) O=out PYTHON=python2 HOSTCC="gcc-8" KCFLAGS="-Wno-error"
+          make -j1 O=out PYTHON=python2 HOSTCC="gcc-8" KCFLAGS="-Wno-error"
 
       - name: Package with AnyKernel3
         run: |
