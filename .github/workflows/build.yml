@@ -1,0 +1,47 @@
+name: Build NetHunter Kernel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Kernel Source
+        uses: actions/checkout@v4
+        with:
+          depth: 1
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python2
+
+      - name: Download ARM GCC Toolchain
+        run: |
+          git clone --depth=1 https://github.com -b lineage-18.1 toolchain
+
+      - name: Build Kernel
+        run: |
+          export ARCH=arm
+          export SUBARCH=arm
+          export CROSS_COMPILE=$(pwd)/toolchain/bin/arm-linux-androideabi-
+          mkdir -p out
+          make O=out lineage_klte_bcm2079x_defconfig
+          make -j$(nproc) O=out
+
+      - name: Package with AnyKernel3
+        run: |
+          git clone --depth=1 https://github.com
+          cp out/arch/arm/boot/zImage-dtb AnyKernel3/
+          cd AnyKernel3
+          sed -i 's/do.devicecheck=1/do.devicecheck=0/g' anykernel.sh
+          sed -i 's/block=\/dev\/block\/platform\/omap\/omap_hsmmc.0\/by-name\/boot;/block=auto;/g' anykernel.sh
+          sed -i 's/is_slot_device=0;/is_slot_device=auto;/g' anykernel.sh
+          zip -r9 ../NetHunter-klte-RT3070.zip * -x .git README.md *placeholder
+
+      - name: Upload Kernel Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetHunter-klte-RT3070
+          path: NetHunter-klte-RT3070.zip
