@@ -19,11 +19,14 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Download GCC 4.9
+      - name: Download GCC 4.9 & Build dtbToolCM
         run: |
           HOST="https://github.com"
           REPO="/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9"
+          DTB="/LineageOS/android_system_tools_dtbtool"
           git clone --depth=1 "${HOST}${REPO}" -b lineage-17.1 toolchain
+          git clone --depth=1 "${HOST}${DTB}" -b lineage-18.1 dtbtool
+          gcc-8 -o dtbToolCM dtbtool/dtbtool.c
 
       - name: Patch DTC & Configure RT3070
         run: |
@@ -41,7 +44,7 @@ jobs:
           CONFIG_USB_NET_DRIVERS=y
           EOF
 
-      - name: Build Kernel
+      - name: Build Kernel & Generate dt.img
         run: |
           export ARCH=arm
           export SUBARCH=arm
@@ -49,6 +52,7 @@ jobs:
           mkdir -p out
           make O=out HOSTCC="gcc-8" lineage_klte_bcm2079x_defconfig
           make -j$(nproc) O=out PYTHON=python2 HOSTCC="gcc-8" KCFLAGS="-Wno-error"
+          ./dtbToolCM -2 -o out/arch/arm/boot/dt.img -s 2048 -p out/scripts/dtc/ out/arch/arm/boot/
 
       - name: Package with AnyKernel3
         run: |
@@ -56,6 +60,7 @@ jobs:
           AK="/osm0sis/AnyKernel3.git"
           git clone --depth=1 "${HOST}${AK}"
           cp out/arch/arm/boot/zImage AnyKernel3/
+          cp out/arch/arm/boot/dt.img AnyKernel3/dtb
           cd AnyKernel3
           cat << 'EOF' > anykernel.sh
           properties() { '
