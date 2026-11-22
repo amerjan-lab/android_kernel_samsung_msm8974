@@ -66,8 +66,8 @@ jobs:
           do.cleanup=1
           do.cleanuponabort=0
           '; }
-          BLOCK=/dev/block/bootdevice/by-name/boot;
-          block=/dev/block/bootdevice/by-name/boot;
+          BLOCK=/dev/block/mmcblk0p15;
+          block=/dev/block/mmcblk0p15;
           IS_SLOT_DEVICE=0;
           is_slot_device=0;
           RAMDISK_COMPRESSION=auto;
