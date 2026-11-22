@@ -25,11 +25,13 @@ jobs:
           REPO="/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9"
           git clone --depth=1 "${HOST}${REPO}" -b lineage-17.1 toolchain
 
-      - name: Patch DTC & Configure RT3070
+      - name: Extract Config from Stock Boot & Configure RT3070
         run: |
           sed -i 's/^YYLTYPE yylloc;/extern YYLTYPE yylloc;/g' scripts/dtc/dtc-lexer.lex.c_shipped scripts/dtc/dtc-lexer.l
-          sed -i '/CONFIG_MAC80211\|CONFIG_CFG80211\|CONFIG_RT2X00\|CONFIG_RT2800USB\|CONFIG_USB_NET_DRIVERS/d' arch/arm/configs/lineage_klte_bcm2079x_defconfig
-          cat << 'EOF' >> arch/arm/configs/lineage_klte_bcm2079x_defconfig
+          chmod +x scripts/extract-ikconfig
+          ./scripts/extract-ikconfig stock_boot.img > arch/arm/configs/exact_s5_defconfig
+          sed -i '/CONFIG_MAC80211\|CONFIG_CFG80211\|CONFIG_RT2X00\|CONFIG_RT2800USB\|CONFIG_USB_NET_DRIVERS/d' arch/arm/configs/exact_s5_defconfig
+          cat << 'EOF' >> arch/arm/configs/exact_s5_defconfig
           CONFIG_MAC80211=y
           CONFIG_CFG80211=y
           CONFIG_CFG80211_WEXT=y
@@ -47,7 +49,7 @@ jobs:
           export SUBARCH=arm
           export CROSS_COMPILE=$(pwd)/toolchain/bin/arm-linux-androideabi-
           mkdir -p out
-          make O=out HOSTCC="gcc-8" lineage_klte_bcm2079x_defconfig
+          make O=out HOSTCC="gcc-8" exact_s5_defconfig
           make -j$(nproc) O=out PYTHON=python2 HOSTCC="gcc-8" KCFLAGS="-Wno-error"
 
       - name: Package with AnyKernel3
